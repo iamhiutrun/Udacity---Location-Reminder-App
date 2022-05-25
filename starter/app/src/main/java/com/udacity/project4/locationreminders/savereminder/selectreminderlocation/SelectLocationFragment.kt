@@ -101,7 +101,7 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
             selectedMarker = map.addMarker(
                 MarkerOptions()
                     .position(it)
-                    .title(getString(R.string.dropped_pin))
+                    .title(snippet)
                     .snippet(snippet)
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ROSE))
             )
@@ -126,9 +126,13 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
     }
 
     private fun enableUserLocation() {
-        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        val fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireContext())
         when {
-            (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) -> {
+            (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED) -> {
 
                 // You can use the API that requires the permission.
                 map.isMyLocationEnabled = true
@@ -139,13 +143,16 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         lastKnownLocation = location
                         val currentLatLng = LatLng(location.latitude, location.longitude)
                         val markerOptions = MarkerOptions().position(currentLatLng)
-                        map.addMarker(markerOptions)
+                        selectedMarker = map.addMarker(markerOptions)
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 12f))
                     }
                 }
-                Toast.makeText(context, "Location permission is granted.", Toast.LENGTH_LONG).show()
+//                Toast.makeText(context, "Location permission is granted.", Toast.LENGTH_LONG).show()
             }
-            (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) ->{
+            (ActivityCompat.shouldShowRequestPermissionRationale(
+                requireActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )) -> {
                 // Explain why you need the permission
                 // Add dialog
                 requestPermissions(
@@ -168,10 +175,20 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         if (this::selectedMarker.isInitialized) {
             _viewModel.latitude.value = selectedMarker.position.latitude
             _viewModel.longitude.value = selectedMarker.position.longitude
-            _viewModel.reminderSelectedLocationStr.value = selectedMarker.title
+            _viewModel.reminderSelectedLocationStr.value = selectedMarker.title ?: String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                selectedMarker.position.latitude,
+                selectedMarker.position.longitude
+            )
+            Log.d(TAG, "onLocationSelected: ${selectedMarker.title}")
             findNavController().popBackStack()
         } else {
-            val toast = Toast.makeText(context, resources.getString(R.string.select_location), Toast.LENGTH_SHORT)
+            val toast = Toast.makeText(
+                context,
+                resources.getString(R.string.select_location),
+                Toast.LENGTH_SHORT
+            )
             toast.show()
         }
     }
@@ -211,7 +228,11 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         // Check if location permissions are granted and if so enable the location
 
@@ -233,7 +254,8 @@ class SelectLocationFragment : BaseFragment(), OnMapReadyCallback {
                         R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
                     ).setAction(android.R.string.ok) {
                         requestPermissions(
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), FINE_LOCATION_ACCESS_REQUEST_CODE
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                            FINE_LOCATION_ACCESS_REQUEST_CODE
                         )
                     }.show()
                 }

@@ -7,9 +7,11 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import com.udacity.project4.R
 import com.udacity.project4.locationreminders.geofence.GeofenceConstants.ACTION_GEOFENCE_EVENT
+import com.udacity.project4.locationreminders.savereminder.ACTION_GEOFENCE
 import com.udacity.project4.utils.sendNotification
 
 /**
@@ -24,14 +26,40 @@ import com.udacity.project4.utils.sendNotification
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        Log.e("Geofence", "onReceive")
+        // implement the onReceive method to receive the geofencing events at the background
+        if (intent.action == ACTION_GEOFENCE) {
+            val geofencingEvent = GeofencingEvent.fromIntent(intent)
 
-        if (intent.action == ACTION_GEOFENCE_EVENT) {
-            GeofenceTransitionsJobIntentService.enqueueWork(context, intent)
-
+            if (geofencingEvent.hasError()) {
+                val errorMessage = errorMessage(context, geofencingEvent.errorCode)
+                Log.e("Geofence", errorMessage)
+                return
+            }else {
+                if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                    Log.e("Geofence", "Entrato su regione di fence")
+                    GeofenceTransitionsJobIntentService.enqueueWork(context, intent)
+                }
+            }
         }
-
     }
 
+
+    private fun errorMessage(context: Context, errorCode: Int): String {
+        val resources = context.resources
+        return when (errorCode) {
+            GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE -> resources.getString(
+                R.string.geofence_not_available
+            )
+            GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES -> resources.getString(
+                R.string.geofence_too_many_geofences
+            )
+            GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS -> resources.getString(
+                R.string.geofence_too_many_pending_intents
+            )
+            else -> resources.getString(R.string.geofence_unknown_error)
+        }
+    }
 
 
 }

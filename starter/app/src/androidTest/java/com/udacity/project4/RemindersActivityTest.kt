@@ -137,6 +137,7 @@ class RemindersActivityTest :
 
         val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
         dataBindingIdlingResource.monitorActivity(activityScenario)
+        val activity = getActivity(activityScenario)
 
         // GIVEN - an SaveReminder Screen without Selected Location
         onView(withId(R.id.addReminderFAB)).perform(click())
